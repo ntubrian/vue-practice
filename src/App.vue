@@ -1,22 +1,25 @@
 <template>
-  <div id="app">
+  <div id="app" :class="weather.main && weather.main.temp > 20 ? 'warm' : ''">
     <div class="container">
       <!-- search bar -->
       <div class="search-box">
-        <input type="text" placeholder="Search...." class="search-bar" />
+        <input
+          type="text"
+          class="search-bar"
+          placeholder="Search....."
+          v-model="query"
+          @keyup.enter="fetchWeather"
+        />
       </div>
 
-      <div class="weather-wrapper">
-        <!-- location & date info -->
+      <div class="weather-wrap" v-if="weather.main">
         <div class="location-box">
-          <div class="location">Taichung</div>
-          <div class="date">Octorber 8th 2020</div>
+          <div class="location">{{ weather.name }}</div>
+          <div class="date">{{ currentDate }}</div>
         </div>
-
-        <!-- weather info -->
         <div class="weather-box">
-          <div class="temperature">26°C</div>
-          <div class="weather">Cloud</div>
+          <div class="temperature">{{ Math.round(weather.main.temp) }}°C</div>
+          <div class="weather">{{ weather.weather[0].main }}</div>
         </div>
       </div>
     </div>
@@ -24,10 +27,37 @@
 </template>
 
 <script>
-
+import dayjs from "dayjs";
+import advancedFormat from "dayjs/plugin/advancedFormat";
+dayjs.extend(advancedFormat);
 export default {
-  name: 'App',
-}
+  name: "App",
+  data() {
+    return {
+      api_key: process.env.VUE_APP_WEATHER_KEY,
+      base_url: "https://api.openweathermap.org/data/2.5/",
+      query: "Taichung",
+      weather: {},
+      date: "",
+    };
+  },
+  methods: {
+    async fetchWeather() {
+      const data = await fetch(
+        `${this.base_url}weather?q=${this.query}&units=metric&APPID=${this.api_key}`
+      );
+      this.weather = await data.json();
+    },
+  },
+  computed: {
+    currentDate() {
+      return dayjs().format(`MMMM Do YYYY`);
+    },
+  },
+  created() {
+    this.fetchWeather();
+  },
+};
 </script>
 
 <style>
@@ -37,14 +67,14 @@ export default {
   box-sizing: border-box;
 }
 #app {
-  background-image: url('./assets/cold-bg.jpg');
+  background-image: url("./assets/cold-bg.jpg");
   background-size: cover;
   background-position: 50%;
   transition: 0.5s;
 }
 
 #app.warm {
-  background-image: url('./assets/warm-bg.jpg');
+  background-image: url("./assets/warm-bg.jpg");
 }
 
 .container {
@@ -54,7 +84,7 @@ export default {
     to bottom,
     rgba(0, 0, 0, 0.25),
     rgba(0, 0, 0, 0.75)
-  )
+  );
 }
 .search-box {
   width: 100%;
@@ -65,13 +95,13 @@ export default {
   display: block;
   width: 100%;
   padding: 15px;
-  transition: all 1.0s ease-in;
+  transition: all 1s ease-in;
   border-radius: 0px 16px 0 16px;
   font-size: 20px;
   border: none;
   outline: none;
   background: none;
-  background-color: hsla(0,0%,100%,.5);
+  background-color: hsla(0, 0%, 100%, 0.5);
 }
 .search-box .search-bar:focus {
   background-color: rgba(255, 255, 255, 0.75);
